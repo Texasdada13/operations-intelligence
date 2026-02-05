@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - AI-Powered COO Consultant{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 4rem 0;
+    }
+
+    .hero h1 {
+        font-size: 2.75rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero .lead {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--accent-light);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--accent-color);
+        margin-bottom: 1rem;
+    }
+
+    .feature-card {
+        padding: 2rem;
+        height: 100%;
+    }
+
+    .feature-card h5 {
+        color: #1e3a5f;
+        font-weight: 600;
+    }
+
+    .cta-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 4rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1>Your AI-Powered<br>Chief Operating Officer</h1>
+                <p class="lead">
+                    Optimize processes, improve efficiency, and make data-driven operational decisions
+                    with intelligent analysis and real-time insights.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="/dashboard" class="btn btn-light btn-lg">
+                        <i class="bi bi-speedometer2 me-2"></i>View Dashboard
+                    </a>
+                    <a href="/chat" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-chat-dots me-2"></i>Talk to AI COO
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center">
+                <i class="bi bi-gear-wide-connected" style="font-size: 12rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Operational Excellence at Your Fingertips</h2>
+            <p class="text-muted">Comprehensive tools for process optimization and performance management</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h5>Process Analytics</h5>
+                    <p class="text-muted">
+                        Analyze process efficiency, identify bottlenecks, and optimize cycle times
+                        with intelligent process mapping.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-bar-chart-line"></i>
+                    </div>
+                    <h5>KPI Benchmarking</h5>
+                    <p class="text-muted">
+                        Compare your operational metrics against industry standards and
+                        identify improvement opportunities.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <h5>Capacity Planning</h5>
+                    <p class="text-muted">
+                        Forecast demand, allocate resources, and plan capacity to meet
+                        business objectives efficiently.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5>Risk Assessment</h5>
+                    <p class="text-muted">
+                        Identify operational risks across efficiency, quality, capacity,
+                        and reliability dimensions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <h5>OEE Tracking</h5>
+                    <p class="text-muted">
+                        Monitor Overall Equipment Effectiveness with detailed availability,
+                        performance, and quality metrics.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <h5>AI Consultation</h5>
+                    <p class="text-muted">
+                        Get instant advice from your AI COO consultant on any operational
+                        challenge or decision.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- KPI Categories -->
+<section class="cta-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Track What Matters</h2>
+            <p class="text-muted">Comprehensive KPI tracking across all operational dimensions</p>
+        </div>
+
+        <div class="row g-3 justify-content-center">
+            <div class="col-auto">
+                <span class="badge bg-primary fs-6 px-3 py-2">
+                    <i class="bi bi-lightning me-1"></i>Efficiency
+                </span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-success fs-6 px-3 py-2">
+                    <i class="bi bi-check-circle me-1"></i>Quality
+                </span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-info fs-6 px-3 py-2">
+                    <i class="bi bi-truck me-1"></i>Delivery
+                </span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                    <i class="bi bi-currency-dollar me-1"></i>Cost
+                </span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-danger fs-6 px-3 py-2">
+                    <i class="bi bi-shield me-1"></i>Safety
+                </span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-secondary fs-6 px-3 py-2">
+                    <i class="bi bi-people me-1"></i>Workforce
+                </span>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="/dashboard" class="btn btn-primary btn-lg">
+                Get Started <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

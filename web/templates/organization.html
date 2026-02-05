@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}{{ organization.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item active">{{ organization.name }}</li>
+                </ol>
+            </nav>
+            <h2>{{ organization.name }}</h2>
+            <p class="text-muted mb-0">
+                {{ organization.industry or 'General Operations' }} |
+                {{ organization.operation_type or 'Mixed' }} Operations |
+                {{ organization.employee_count or 'N/A' }} Employees
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/chat/{{ organization.id }}" class="btn btn-primary">
+                <i class="bi bi-chat-dots me-2"></i>AI Consultant
+            </a>
+            <a href="/benchmarks/{{ organization.id }}" class="btn btn-outline-primary">
+                <i class="bi bi-bar-chart me-2"></i>Benchmarks
+            </a>
+            <a href="/capacity/{{ organization.id }}" class="btn btn-outline-secondary">
+                <i class="bi bi-calendar-check me-2"></i>Capacity
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="metric-value {{ 'score-excellent' if organization.overall_oee and organization.overall_oee >= 85 else 'score-good' if organization.overall_oee and organization.overall_oee >= 70 else 'score-fair' if organization.overall_oee and organization.overall_oee >= 55 else 'score-poor' if organization.overall_oee else '' }}">
+                    {{ "%.1f"|format(organization.overall_oee) if organization.overall_oee else '--' }}%
+                </div>
+                <div class="metric-label">Overall OEE</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="metric-value {{ 'score-excellent' if organization.efficiency_score and organization.efficiency_score >= 80 else 'score-good' if organization.efficiency_score and organization.efficiency_score >= 70 else 'score-fair' if organization.efficiency_score and organization.efficiency_score >= 60 else 'score-poor' if organization.efficiency_score else '' }}">
+                    {{ "%.0f"|format(organization.efficiency_score) if organization.efficiency_score else '--' }}
+                </div>
+                <div class="metric-label">Efficiency Score</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="metric-value">
+                    {% if organization.risk_level %}
+                    <span class="badge {{ 'risk-low' if organization.risk_level == 'Low' else 'risk-medium' if organization.risk_level == 'Medium' else 'risk-high' if organization.risk_level == 'High' else 'risk-critical' }} fs-5">
+                        {{ organization.risk_level }}
+                    </span>
+                    {% else %}
+                    --
+                    {% endif %}
+                </div>
+                <div class="metric-label">Risk Level</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="metric-value">{{ processes|length }}</div>
+                <div class="metric-label">Active Processes</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- KPI History -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>KPI History</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addKPIModal">
+                        <i class="bi bi-plus-lg me-1"></i>Add Entry
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if kpi_entries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Period</th>
+                                    <th class="text-center">OEE</th>
+                                    <th class="text-center">Productivity</th>
+                                    <th class="text-center">Quality</th>
+                                    <th class="text-center">On-Time</th>
+                                    <th class="text-center">Safety</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in kpi_entries %}
+                                <tr>
+                                    <td>{{ entry.period_label or entry.period_date.strftime('%b %Y') }}</td>
+                                    <td class="text-center">
+                                        <span class="{{ 'score-excellent' if entry.oee and entry.oee >= 85 else 'score-good' if entry.oee and entry.oee >= 70 else 'score-fair' if entry.oee and entry.oee >= 55 else 'score-poor' if entry.oee else '' }}">
+                                            {{ "%.1f"|format(entry.oee) if entry.oee else '--' }}%
+                                        </span>
+                                    </td>
+                                    <td class="text-center">{{ "%.1f"|format(entry.labor_productivity) if entry.labor_productivity else '--' }}%</td>
+                                    <td class="text-center">{{ "%.1f"|format(entry.first_pass_yield) if entry.first_pass_yield else '--' }}%</td>
+                                    <td class="text-center">{{ "%.1f"|format(entry.on_time_delivery) if entry.on_time_delivery else '--' }}%</td>
+                                    <td class="text-center">{{ "%.1f"|format(entry.incident_rate) if entry.incident_rate else '--' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-clipboard-data text-muted" style="font-size: 3rem;"></i>
+                        <p class="mt-3 text-muted">No KPI data yet. Add your first entry.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Processes -->
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Processes</h5>
+                    <a href="/processes/{{ organization.id }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if processes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Process</th>
+                                    <th class="text-center">OEE</th>
+                                    <th class="text-center">Cycle Time</th>
+                                    <th class="text-center">Yield</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for process in processes[:5] %}
+                                <tr>
+                                    <td>
+                                        {{ process.name }}
+                                        <br><small class="text-muted">{{ process.process_type or 'General' }}</small>
+                                    </td>
+                                    <td class="text-center">{{ "%.1f"|format(process.oee) if process.oee else '--' }}%</td>
+                                    <td class="text-center">{{ "%.1f"|format(process.cycle_time) if process.cycle_time else '--' }} min</td>
+                                    <td class="text-center">{{ "%.1f"|format(process.first_pass_yield) if process.first_pass_yield else '--' }}%</td>
+                                    <td class="text-center">
+                                        {% if process.status %}
+                                        <span class="badge {{ 'status-optimal' if process.status == 'Optimal' else 'status-healthy' if process.status == 'Healthy' else 'status-attention' if process.status == 'Attention Needed' else 'status-at-risk' if process.status == 'At Risk' else 'status-critical' }}">
+                                            {{ process.status }}
+                                        </span>
+                                        {% else %}
+                                        --
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No processes defined</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Latest Benchmark -->
+            {% if benchmark %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-bar-chart me-2"></i>Latest Benchmark
+                </div>
+                <div class="card-body text-center">
+                    <div class="health-score {{ 'score-excellent' if benchmark.overall_score >= 80 else 'score-good' if benchmark.overall_score >= 70 else 'score-fair' if benchmark.overall_score >= 60 else 'score-poor' if benchmark.overall_score >= 40 else 'score-critical' }}">
+                        {{ "%.0f"|format(benchmark.overall_score) }}
+                    </div>
+                    <div class="text-muted mb-2">{{ benchmark.overall_rating }} (Grade: {{ benchmark.grade }})</div>
+                    <hr>
+                    {% if benchmark.get_strengths() %}
+                    <div class="text-start mb-3">
+                        <small class="text-muted">Strengths:</small>
+                        {% for s in benchmark.get_strengths()[:3] %}
+                        <div class="small text-success"><i class="bi bi-check-circle me-1"></i>{{ s }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if benchmark.get_improvements() %}
+                    <div class="text-start">
+                        <small class="text-muted">Improve:</small>
+                        {% for i in benchmark.get_improvements()[:3] %}
+                        <div class="small text-warning"><i class="bi bi-exclamation-circle me-1"></i>{{ i }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <a href="/benchmarks/{{ organization.id }}" class="btn btn-outline-primary btn-sm w-100 mt-3">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning me-2"></i>Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" onclick="runBenchmark()">
+                            <i class="bi bi-bar-chart me-2"></i>Run Benchmark Analysis
+                        </button>
+                        <a href="/capacity/{{ organization.id }}" class="btn btn-outline-primary">
+                            <i class="bi bi-calendar-check me-2"></i>Capacity Planning
+                        </a>
+                        <a href="/chat/{{ organization.id }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-chat-dots me-2"></i>Ask AI Consultant
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resources Summary -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-people me-2"></i>Resources
+                </div>
+                <div class="card-body">
+                    {% if resources %}
+                    {% for resource in resources[:5] %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <div class="small fw-semibold">{{ resource.name }}</div>
+                            <small class="text-muted">{{ resource.resource_type }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="{{ 'score-excellent' if resource.utilization and resource.utilization >= 70 and resource.utilization < 90 else 'score-good' if resource.utilization and resource.utilization >= 50 else 'score-fair' if resource.utilization and resource.utilization >= 30 else 'score-poor' if resource.utilization else '' }}">
+                                {{ "%.0f"|format(resource.utilization) if resource.utilization else '--' }}%
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted text-center mb-0 small">No resources defined</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add KPI Modal -->
+<div class="modal fade" id="addKPIModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add KPI Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addKPIForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Period Date *</label>
+                            <input type="date" class="form-control" id="kpiDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Period Label</label>
+                            <input type="text" class="form-control" id="kpiLabel" placeholder="e.g., Jan 2024">
+                        </div>
+
+                        <div class="col-12"><hr><h6>Efficiency KPIs</h6></div>
+                        <div class="col-md-4">
+                            <label class="form-label">OEE (%)</label>
+                            <input type="number" class="form-control" id="kpiOee" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Labor Productivity (%)</label>
+                            <input type="number" class="form-control" id="kpiProductivity" step="0.1" min="0" max="200">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Capacity Utilization (%)</label>
+                            <input type="number" class="form-control" id="kpiCapacity" step="0.1" min="0" max="100">
+                        </div>
+
+                        <div class="col-12"><hr><h6>Quality KPIs</h6></div>
+                        <div class="col-md-4">
+                            <label class="form-label">First Pass Yield (%)</label>
+                            <input type="number" class="form-control" id="kpiYield" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Defect Rate (%)</label>
+                            <input type="number" class="form-control" id="kpiDefect" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Rework Rate (%)</label>
+                            <input type="number" class="form-control" id="kpiRework" step="0.1" min="0" max="100">
+                        </div>
+
+                        <div class="col-12"><hr><h6>Delivery KPIs</h6></div>
+                        <div class="col-md-4">
+                            <label class="form-label">On-Time Delivery (%)</label>
+                            <input type="number" class="form-control" id="kpiOnTime" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Order Fulfillment (%)</label>
+                            <input type="number" class="form-control" id="kpiFulfillment" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Lead Time (days)</label>
+                            <input type="number" class="form-control" id="kpiLeadTime" step="0.1" min="0">
+                        </div>
+
+                        <div class="col-12"><hr><h6>Cost & Safety KPIs</h6></div>
+                        <div class="col-md-4">
+                            <label class="form-label">Cost per Unit Variance (%)</label>
+                            <input type="number" class="form-control" id="kpiCost" step="0.1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Waste Rate (%)</label>
+                            <input type="number" class="form-control" id="kpiWaste" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Incident Rate (per 100)</label>
+                            <input type="number" class="form-control" id="kpiIncident" step="0.1" min="0">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addKPIEntry()">Add Entry</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const orgId = '{{ organization.id }}';
+
+async function addKPIEntry() {
+    const data = {
+        period_date: document.getElementById('kpiDate').value,
+        period_label: document.getElementById('kpiLabel').value,
+        oee: parseFloat(document.getElementById('kpiOee').value) || null,
+        labor_productivity: parseFloat(document.getElementById('kpiProductivity').value) || null,
+        capacity_utilization: parseFloat(document.getElementById('kpiCapacity').value) || null,
+        first_pass_yield: parseFloat(document.getElementById('kpiYield').value) || null,
+        defect_rate: parseFloat(document.getElementById('kpiDefect').value) || null,
+        rework_rate: parseFloat(document.getElementById('kpiRework').value) || null,
+        on_time_delivery: parseFloat(document.getElementById('kpiOnTime').value) || null,
+        order_fulfillment: parseFloat(document.getElementById('kpiFulfillment').value) || null,
+        lead_time: parseFloat(document.getElementById('kpiLeadTime').value) || null,
+        cost_per_unit: parseFloat(document.getElementById('kpiCost').value) || null,
+        waste_rate: parseFloat(document.getElementById('kpiWaste').value) || null,
+        incident_rate: parseFloat(document.getElementById('kpiIncident').value) || null
+    };
+
+    if (!data.period_date) {
+        alert('Period date is required');
+        return;
+    }
+
+    try {
+        const result = await apiCall(`/api/organizations/${orgId}/kpis`, 'POST', data);
+        if (result.success) {
+            location.reload();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function runBenchmark() {
+    try {
+        const result = await apiCall(`/api/organizations/${orgId}/benchmark`, 'POST', {
+            benchmark_type: 'operations'
+        });
+        if (result.success) {
+            alert(`Benchmark Complete!\nScore: ${result.benchmark.overall_score.toFixed(0)} (${result.benchmark.overall_rating})`);
+            location.reload();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
