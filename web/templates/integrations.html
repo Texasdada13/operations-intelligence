@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+
+{% block title %}DevOps Integrations - {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .integration-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    .integration-card:hover {
+        border-color: #1e3a5f;
+        box-shadow: 0 4px 15px rgba(30, 58, 95, 0.15);
+    }
+    .integration-card.connected {
+        border-color: var(--accent-color);
+        background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+    }
+    .integration-card.demo {
+        border-color: #2196f3;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+    .integration-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+    .jira-icon { background: linear-gradient(135deg, #0052cc 0%, #0747a6 100%); color: white; }
+    .azure-icon { background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%); color: white; }
+    .demo-icon { background: var(--primary-gradient); color: white; }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-connected { background: #d5f5e3; color: #1e8449; }
+    .status-not-connected { background: #f5f5f5; color: #7f8c8d; }
+    .status-demo { background: #e3f2fd; color: #1565c0; }
+    .summary-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .chart-container {
+        position: relative;
+        height: 250px;
+    }
+    .workload-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .workload-item:last-child { border-bottom: none; }
+    .workload-bar {
+        flex: 1;
+        margin-left: 1rem;
+        background: #f0f0f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .workload-fill {
+        height: 8px;
+        background: var(--primary-gradient);
+        transition: width 0.5s ease;
+    }
+    .alert-item {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    .alert-warning { background: #fff3e0; border-left: 4px solid #ff9800; }
+    .alert-info { background: #e3f2fd; border-left: 4px solid #2196f3; }
+    .alert-success { background: #e8f5e9; border-left: 4px solid #4caf50; }
+    .tab-content { padding-top: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-plug text-primary me-2"></i>DevOps Integrations</h2>
+            <p class="text-muted mb-0">Connect to Jira and Azure DevOps for real-time operations data</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary" onclick="refreshData()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Integration Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="integration-card" id="jira-card">
+                <div class="integration-icon jira-icon">
+                    <i class="bi bi-kanban"></i>
+                </div>
+                <h5>Jira Cloud</h5>
+                <p class="text-muted small mb-3">Sprint velocity, issue tracking, cycle time metrics</p>
+                <span class="status-badge status-not-connected" id="jira-status">Not Connected</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="integration-card" id="azure-card">
+                <div class="integration-icon azure-icon">
+                    <i class="bi bi-microsoft"></i>
+                </div>
+                <h5>Azure DevOps</h5>
+                <p class="text-muted small mb-3">Work items, builds, pipelines, deployments</p>
+                <span class="status-badge status-not-connected" id="azure-status">Not Connected</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="integration-card" id="demo-card">
+                <div class="integration-icon demo-icon">
+                    <i class="bi bi-play-circle"></i>
+                </div>
+                <h5>Demo Mode</h5>
+                <p class="text-muted small mb-3">Try with realistic sample DevOps data</p>
+                <button class="btn btn-primary btn-sm" id="demo-btn" onclick="enableDemoMode()">
+                    <i class="bi bi-play me-1"></i>Enable Demo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Section (shown when connected) -->
+    <div id="data-section" style="display: none;">
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="metric-value" id="open-items">-</div>
+                    <div class="metric-label">Open Work Items</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="metric-value" id="completed-30d">-</div>
+                    <div class="metric-label">Completed (30 days)</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="metric-value" id="cycle-time">-</div>
+                    <div class="metric-label">Avg Cycle Time</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="metric-value" id="build-success">-</div>
+                    <div class="metric-label">Build Success Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="card mb-4" id="alerts-card" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Alerts</h5>
+            </div>
+            <div class="card-body" id="alerts-container"></div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#work-items-tab">
+                    <i class="bi bi-list-task me-1"></i>Work Items
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#velocity-tab">
+                    <i class="bi bi-graph-up me-1"></i>Velocity
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#builds-tab">
+                    <i class="bi bi-box me-1"></i>Builds
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#team-tab">
+                    <i class="bi bi-people me-1"></i>Team Workload
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Work Items Tab -->
+            <div class="tab-pane fade show active" id="work-items-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">By Status</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="status-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">By Type</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="type-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Velocity Tab -->
+            <div class="tab-pane fade" id="velocity-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="velocity-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Builds Tab -->
+            <div class="tab-pane fade" id="builds-tab">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <h3 id="total-builds">-</h3>
+                                <div class="text-muted">Total Builds</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <h3 id="successful-builds" class="text-success">-</h3>
+                                <div class="text-muted">Successful</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <h3 id="failed-builds" class="text-danger">-</h3>
+                                <div class="text-muted">Failed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="builds-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Tab -->
+            <div class="tab-pane fade" id="team-tab">
+                <div class="card">
+                    <div class="card-body" id="team-workload">
+                        <!-- Workload items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Not Connected Message -->
+    <div id="not-connected-section" class="text-center py-5">
+        <i class="bi bi-plug display-1 text-muted"></i>
+        <h4 class="mt-3">No Integrations Connected</h4>
+        <p class="text-muted">Connect to Jira or Azure DevOps, or enable Demo Mode to explore the features.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let summaryData = null;
+let charts = {};
+
+async function checkStatus() {
+    try {
+        const res = await fetch('/api/integrations/status');
+        const status = await res.json();
+        updateIntegrationCards(status);
+
+        if (status.jira.connected || status.azure_devops.connected || status.demo_mode) {
+            document.getElementById('data-section').style.display = 'block';
+            document.getElementById('not-connected-section').style.display = 'none';
+            await loadAllData();
+        }
+    } catch (e) {
+        console.error('Error checking status:', e);
+    }
+}
+
+function updateIntegrationCards(status) {
+    // Jira
+    const jiraCard = document.getElementById('jira-card');
+    const jiraStatus = document.getElementById('jira-status');
+    if (status.jira.connected) {
+        jiraCard.classList.add('connected');
+        jiraStatus.className = 'status-badge status-connected';
+        jiraStatus.textContent = status.jira.organization || 'Connected';
+    }
+
+    // Azure DevOps
+    const azureCard = document.getElementById('azure-card');
+    const azureStatus = document.getElementById('azure-status');
+    if (status.azure_devops.connected) {
+        azureCard.classList.add('connected');
+        azureStatus.className = 'status-badge status-connected';
+        azureStatus.textContent = status.azure_devops.project || 'Connected';
+    }
+
+    // Demo card
+    const demoCard = document.getElementById('demo-card');
+    const demoBtn = document.getElementById('demo-btn');
+    if (status.demo_mode) {
+        demoCard.classList.add('demo');
+        demoBtn.innerHTML = '<i class="bi bi-check me-1"></i>Demo Active';
+        demoBtn.disabled = true;
+    }
+}
+
+async function enableDemoMode() {
+    try {
+        const btn = document.getElementById('demo-btn');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+        btn.disabled = true;
+
+        await fetch('/api/integrations/demo/enable', { method: 'POST' });
+        await checkStatus();
+    } catch (e) {
+        console.error('Error enabling demo mode:', e);
+        alert('Failed to enable demo mode');
+    }
+}
+
+async function loadAllData() {
+    await loadOperationsSummary();
+}
+
+async function loadOperationsSummary() {
+    try {
+        const res = await fetch('/api/integrations/operations-summary');
+        summaryData = await res.json();
+
+        // Update metrics
+        document.getElementById('open-items').textContent = summaryData.work_items.total_open;
+        document.getElementById('completed-30d').textContent = summaryData.work_items.completed_last_30_days;
+        document.getElementById('cycle-time').textContent = summaryData.performance.avg_cycle_time_days + ' days';
+        document.getElementById('build-success').textContent = summaryData.builds.success_rate + '%';
+
+        // Show alerts
+        if (summaryData.alerts && summaryData.alerts.length > 0) {
+            document.getElementById('alerts-card').style.display = 'block';
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = summaryData.alerts.map(alert => `
+                <div class="alert-item alert-${alert.severity === 'high' ? 'warning' : 'info'}">
+                    <strong>${alert.type || 'Alert'}:</strong> ${alert.message}
+                </div>
+            `).join('');
+        }
+
+        // Update charts
+        updateCharts();
+        updateTeamWorkload();
+        updateBuilds();
+    } catch (e) {
+        console.error('Error loading operations summary:', e);
+    }
+}
+
+function updateCharts() {
+    if (!summaryData) return;
+
+    // Status chart
+    if (charts.status) charts.status.destroy();
+    const statusCtx = document.getElementById('status-chart').getContext('2d');
+    const statusLabels = Object.keys(summaryData.work_items.by_status);
+    const statusValues = Object.values(summaryData.work_items.by_status);
+    charts.status = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusValues,
+                backgroundColor: ['#4caf50', '#2196f3', '#ff9800', '#f44336', '#9e9e9e', '#673ab7']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'right' } }
+        }
+    });
+
+    // Type chart
+    if (charts.type) charts.type.destroy();
+    const typeCtx = document.getElementById('type-chart').getContext('2d');
+    const typeLabels = Object.keys(summaryData.work_items.by_type);
+    const typeValues = Object.values(summaryData.work_items.by_type);
+    charts.type = new Chart(typeCtx, {
+        type: 'bar',
+        data: {
+            labels: typeLabels,
+            datasets: [{
+                label: 'Count',
+                data: typeValues,
+                backgroundColor: '#1e3a5f'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Velocity chart (mock data for demo)
+    if (charts.velocity) charts.velocity.destroy();
+    const velocityCtx = document.getElementById('velocity-chart').getContext('2d');
+    charts.velocity = new Chart(velocityCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint 4', 'Sprint 5', 'Sprint 6'],
+            datasets: [{
+                label: 'Committed',
+                data: [40, 45, 42, 48, 50, 45],
+                backgroundColor: '#1e3a5f'
+            }, {
+                label: 'Completed',
+                data: [35, 42, 40, 45, 48, 43],
+                backgroundColor: '#00a86b'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+}
+
+function updateTeamWorkload() {
+    if (!summaryData || !summaryData.team.workload.length) return;
+
+    const maxItems = Math.max(...summaryData.team.workload.map(m => m.items));
+    const container = document.getElementById('team-workload');
+    container.innerHTML = `
+        <h6 class="mb-3">Team Member Workload</h6>
+        ${summaryData.team.workload.map(member => {
+            const pct = (member.items / maxItems * 100).toFixed(0);
+            return `
+                <div class="workload-item">
+                    <span style="width: 150px;">${member.name}</span>
+                    <div class="workload-bar">
+                        <div class="workload-fill" style="width: ${pct}%"></div>
+                    </div>
+                    <span class="ms-2 text-muted">${member.items} items</span>
+                </div>
+            `;
+        }).join('')}
+    `;
+}
+
+function updateBuilds() {
+    if (!summaryData) return;
+
+    document.getElementById('total-builds').textContent = summaryData.builds.total || 0;
+    document.getElementById('successful-builds').textContent = summaryData.builds.successful || 0;
+    document.getElementById('failed-builds').textContent = summaryData.builds.failed || 0;
+
+    // Builds chart
+    if (charts.builds) charts.builds.destroy();
+    const ctx = document.getElementById('builds-chart').getContext('2d');
+    charts.builds = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Successful', 'Failed', 'Cancelled'],
+            datasets: [{
+                data: [
+                    summaryData.builds.successful || 0,
+                    summaryData.builds.failed || 0,
+                    summaryData.builds.cancelled || 0
+                ],
+                backgroundColor: ['#4caf50', '#f44336', '#9e9e9e']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'right' } }
+        }
+    });
+}
+
+async function refreshData() {
+    await loadAllData();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', checkStatus);
+</script>
+{% endblock %}

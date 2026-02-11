@@ -5,9 +5,13 @@ Web application for the Fractional COO product.
 """
 
 import os
+import sys
 import json
 from datetime import datetime, date
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
@@ -58,6 +62,10 @@ from src.patterns.weighted_scoring import (
     create_process_efficiency_engine,
     create_resource_utilization_engine
 )
+
+# Initialize integrations
+from src.integrations import OperationsIntegrationManager, IntegrationType
+integration_manager = OperationsIntegrationManager()
 
 # App metadata
 APP_NAME = "Operations Intelligence"
@@ -180,6 +188,95 @@ def chat_view(org_id=None):
         organization=org,
         organizations=organizations
     )
+
+
+@app.route('/integrations')
+def integrations_view():
+    """DevOps integrations page."""
+    return render_template('integrations.html')
+
+
+# ==================== Integration API Routes ====================
+
+@app.route('/api/integrations/status')
+def api_integration_status():
+    """Get integration connection status."""
+    jira_status = integration_manager.get_status(IntegrationType.JIRA)
+    azure_status = integration_manager.get_status(IntegrationType.AZURE_DEVOPS)
+    demo_status = integration_manager.get_status(IntegrationType.DEMO)
+    return jsonify({
+        'jira': {
+            'connected': jira_status.is_connected,
+            'organization': jira_status.organization
+        },
+        'azure_devops': {
+            'connected': azure_status.is_connected,
+            'organization': azure_status.organization,
+            'project': azure_status.project
+        },
+        'demo_mode': demo_status.is_connected
+    })
+
+
+@app.route('/api/integrations/demo/enable', methods=['POST'])
+def api_enable_demo_mode():
+    """Enable demo mode for integrations."""
+    integration_manager.enable_demo_mode()
+    return jsonify({'success': True, 'message': 'Demo mode enabled'})
+
+
+@app.route('/api/integrations/jira/projects')
+def api_jira_projects():
+    """Get Jira projects."""
+    projects = integration_manager.get_jira_projects()
+    if not projects:
+        return jsonify({'error': 'No Jira connection or data'}), 400
+    return jsonify(projects)
+
+
+@app.route('/api/integrations/jira/summary/<project_key>')
+def api_jira_summary(project_key):
+    """Get Jira operations summary for a project."""
+    summary = integration_manager.get_jira_summary(project_key)
+    if not summary:
+        return jsonify({'error': 'No data available'}), 400
+    return jsonify(summary)
+
+
+@app.route('/api/integrations/jira/velocity/<project_key>')
+def api_jira_velocity(project_key):
+    """Get Jira velocity trend."""
+    num_sprints = request.args.get('sprints', 6, type=int)
+    velocity = integration_manager.get_jira_velocity(project_key, num_sprints)
+    if not velocity:
+        return jsonify({'error': 'No velocity data available'}), 400
+    return jsonify(velocity)
+
+
+@app.route('/api/integrations/azure/summary')
+def api_azure_summary():
+    """Get Azure DevOps operations summary."""
+    summary = integration_manager.get_azure_summary()
+    if not summary:
+        return jsonify({'error': 'No Azure DevOps connection or data'}), 400
+    return jsonify(summary)
+
+
+@app.route('/api/integrations/azure/builds')
+def api_azure_builds():
+    """Get Azure DevOps build metrics."""
+    days = request.args.get('days', 30, type=int)
+    builds = integration_manager.get_azure_builds(days)
+    if not builds:
+        return jsonify({'error': 'No build data available'}), 400
+    return jsonify(builds)
+
+
+@app.route('/api/integrations/operations-summary')
+def api_unified_operations_summary():
+    """Get combined operations summary from all sources."""
+    summary = integration_manager.get_unified_operations_summary()
+    return jsonify(summary)
 
 
 # ==================== API Routes ====================
