@@ -646,6 +646,7 @@ def server_error(e):
 # ==================== Health Check ====================
 
 @app.route('/health')
+@limiter.exempt
 def health_check():
     """Health check endpoint."""
     return jsonify({
