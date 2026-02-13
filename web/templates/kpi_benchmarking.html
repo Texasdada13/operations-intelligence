@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}KPI Benchmarking - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 style="color:#1e3a5f;"><i class="bi bi-bar-chart-line me-2" style="color:var(--accent-color);"></i>KPI Benchmarking</h2>
+            <p class="text-muted">Compare operational metrics against industry standards</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value" style="color:#1e3a5f;">78</div><div class="metric-label">Overall Score (100)</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-good">12/18</div><div class="metric-label">Above Benchmark</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-fair">4/18</div><div class="metric-label">Near Benchmark</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-poor">2/18</div><div class="metric-label">Below Benchmark</div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Performance vs Industry Benchmark</h5></div>
+                <div class="card-body"><canvas id="radarChart" height="320"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">KPI Detail Comparison</h5></div>
+                <div class="card-body" id="kpiTable"></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Category Scores</h5></div>
+                <div class="card-body"><canvas id="categoryChart" height="260"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Score Trend</h5></div>
+                <div class="card-body"><canvas id="trendChart" height="200"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-arrow-up-circle me-2" style="color:var(--accent-color);"></i>Improvement Priorities</h5></div>
+                <div class="card-body" id="priorities"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const CATEGORIES = ['Efficiency','Quality','Delivery','Cost','Safety','Workforce'];
+const YOUR_SCORES = [82,88,75,70,92,78];
+const BENCHMARK = [78,82,80,75,85,80];
+
+new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+        labels: CATEGORIES,
+        datasets: [
+            {label:'Your Org',data:YOUR_SCORES,backgroundColor:'rgba(30,58,95,0.2)',borderColor:'#1e3a5f',pointBackgroundColor:'#1e3a5f'},
+            {label:'Industry Benchmark',data:BENCHMARK,backgroundColor:'rgba(0,168,107,0.1)',borderColor:'#00a86b',borderDash:[5,5],pointBackgroundColor:'#00a86b'}
+        ]
+    },
+    options: {responsive:true, scales:{r:{beginAtZero:true,max:100}}, plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(document.getElementById('categoryChart'), {
+    type: 'bar',
+    data: {
+        labels: CATEGORIES,
+        datasets: [
+            {label:'Your Score',data:YOUR_SCORES,backgroundColor:'#1e3a5f'},
+            {label:'Benchmark',data:BENCHMARK,backgroundColor:'#00a86b80'}
+        ]
+    },
+    options: {responsive:true, indexAxis:'y', scales:{x:{beginAtZero:true,max:100}}, plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+        datasets: [
+            {label:'Overall Score',data:[68,70,72,73,74,75,76,78],borderColor:'#1e3a5f',tension:0.3,fill:false},
+            {label:'Benchmark',data:[75,75,76,76,77,77,78,78],borderColor:'#00a86b',borderDash:[5,5],tension:0.3,fill:false}
+        ]
+    },
+    options: {responsive:true, scales:{y:{beginAtZero:false}}, plugins:{legend:{position:'bottom'}}}
+});
+
+const KPIS = [
+    {name:'OEE',category:'Efficiency',yours:'85%',benchmark:'82%',status:'above',gap:'+3%'},
+    {name:'Cycle Time',category:'Efficiency',yours:'4.2h',benchmark:'4.5h',status:'above',gap:'-7%'},
+    {name:'Throughput',category:'Efficiency',yours:'142/day',benchmark:'150/day',status:'below',gap:'-5%'},
+    {name:'First Pass Yield',category:'Quality',yours:'94%',benchmark:'92%',status:'above',gap:'+2%'},
+    {name:'Defect Rate',category:'Quality',yours:'1.8%',benchmark:'2.0%',status:'above',gap:'-10%'},
+    {name:'Customer Returns',category:'Quality',yours:'0.5%',benchmark:'0.8%',status:'above',gap:'-38%'},
+    {name:'On-Time Delivery',category:'Delivery',yours:'88%',benchmark:'92%',status:'below',gap:'-4%'},
+    {name:'Lead Time',category:'Delivery',yours:'5.2d',benchmark:'4.5d',status:'below',gap:'+16%'},
+    {name:'Order Accuracy',category:'Delivery',yours:'97%',benchmark:'96%',status:'above',gap:'+1%'},
+    {name:'Cost per Unit',category:'Cost',yours:'$12.40',benchmark:'$11.80',status:'below',gap:'+5%'},
+    {name:'Scrap Rate',category:'Cost',yours:'3.2%',benchmark:'3.5%',status:'above',gap:'-9%'},
+    {name:'Energy per Unit',category:'Cost',yours:'2.1kWh',benchmark:'2.0kWh',status:'near',gap:'+5%'},
+    {name:'Incident Rate',category:'Safety',yours:'0.8',benchmark:'1.2',status:'above',gap:'-33%'},
+    {name:'Near Miss Reports',category:'Safety',yours:'12/mo',benchmark:'8/mo',status:'above',gap:'+50%'},
+    {name:'Absenteeism',category:'Workforce',yours:'4.2%',benchmark:'3.8%',status:'near',gap:'+11%'},
+    {name:'Training Hours',category:'Workforce',yours:'24h/yr',benchmark:'20h/yr',status:'above',gap:'+20%'}
+];
+
+document.getElementById('kpiTable').innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>KPI</th><th>Category</th><th>Yours</th><th>Benchmark</th><th>Gap</th><th>Status</th></tr></thead><tbody>${KPIS.map(k => {
+    const statusColor = k.status==='above'?'success':k.status==='near'?'warning':'danger';
+    const statusLabel = k.status==='above'?'Above':k.status==='near'?'Near':'Below';
+    return `<tr><td><strong>${k.name}</strong></td><td><small class="text-muted">${k.category}</small></td><td>${k.yours}</td><td>${k.benchmark}</td><td>${k.gap}</td><td><span class="badge bg-${statusColor}">${statusLabel}</span></td></tr>`;
+}).join('')}</tbody></table></div>`;
+
+const PRIORITIES = [
+    {kpi:'On-Time Delivery',gap:'-4%',action:'Optimize scheduling algorithm and add buffer inventory for top SKUs'},
+    {kpi:'Lead Time',gap:'+16%',action:'Implement parallel processing and reduce handoff delays'},
+    {kpi:'Throughput',gap:'-5%',action:'Address processing bottleneck with automation investment'},
+    {kpi:'Cost per Unit',gap:'+5%',action:'Negotiate supplier contracts and reduce energy consumption'}
+];
+
+document.getElementById('priorities').innerHTML = PRIORITIES.map((p,i) =>
+    `<div class="d-flex align-items-start mb-3 p-2 rounded" style="background:#f8f9fa;border-left:3px solid ${i<2?'#f44336':'#ff9800'};">
+        <div class="flex-fill"><strong style="color:#1e3a5f;">${p.kpi}</strong> <span class="badge bg-danger">${p.gap}</span><br><small class="text-muted">${p.action}</small></div>
+    </div>`
+).join('');
+</script>
+{% endblock %}

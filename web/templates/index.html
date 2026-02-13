@@ -88,83 +88,26 @@
         </div>
 
         <div class="row g-4">
+            {% for icon, title, desc, url in [
+                ('bi-graph-up-arrow', 'Process Analytics', 'Analyze process efficiency, identify bottlenecks, and optimize cycle times with intelligent process mapping.', '/process-analytics'),
+                ('bi-bar-chart-line', 'KPI Benchmarking', 'Compare your operational metrics against industry standards and identify improvement opportunities.', '/kpi-benchmarking'),
+                ('bi-calendar-check', 'Capacity Planning', 'Forecast demand, allocate resources, and plan capacity to meet business objectives efficiently.', '/capacity-planning'),
+                ('bi-shield-check', 'Risk Assessment', 'Identify operational risks across efficiency, quality, capacity, and reliability dimensions.', '/risk-assessment'),
+                ('bi-speedometer2', 'OEE Tracking', 'Monitor Overall Equipment Effectiveness with detailed availability, performance, and quality metrics.', '/oee-tracking'),
+                ('bi-chat-dots', 'AI Consultation', 'Get instant advice from your AI COO consultant on any operational challenge or decision.', '/chat')
+            ] %}
             <div class="col-md-6 col-lg-4">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-graph-up-arrow"></i>
+                <a href="{{ url }}" class="text-decoration-none">
+                    <div class="card feature-card" style="transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 8px 25px rgba(0,168,107,0.15)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                        <div class="feature-icon">
+                            <i class="bi {{ icon }}"></i>
+                        </div>
+                        <h5>{{ title }}</h5>
+                        <p class="text-muted">{{ desc }}</p>
                     </div>
-                    <h5>Process Analytics</h5>
-                    <p class="text-muted">
-                        Analyze process efficiency, identify bottlenecks, and optimize cycle times
-                        with intelligent process mapping.
-                    </p>
-                </div>
+                </a>
             </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-bar-chart-line"></i>
-                    </div>
-                    <h5>KPI Benchmarking</h5>
-                    <p class="text-muted">
-                        Compare your operational metrics against industry standards and
-                        identify improvement opportunities.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-calendar-check"></i>
-                    </div>
-                    <h5>Capacity Planning</h5>
-                    <p class="text-muted">
-                        Forecast demand, allocate resources, and plan capacity to meet
-                        business objectives efficiently.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <h5>Risk Assessment</h5>
-                    <p class="text-muted">
-                        Identify operational risks across efficiency, quality, capacity,
-                        and reliability dimensions.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-speedometer2"></i>
-                    </div>
-                    <h5>OEE Tracking</h5>
-                    <p class="text-muted">
-                        Monitor Overall Equipment Effectiveness with detailed availability,
-                        performance, and quality metrics.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-chat-dots"></i>
-                    </div>
-                    <h5>AI Consultation</h5>
-                    <p class="text-muted">
-                        Get instant advice from your AI COO consultant on any operational
-                        challenge or decision.
-                    </p>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>

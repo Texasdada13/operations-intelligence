@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Process Analytics - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 style="color:#1e3a5f;"><i class="bi bi-graph-up-arrow me-2" style="color:var(--accent-color);"></i>Process Analytics</h2>
+            <p class="text-muted">Analyze process efficiency, identify bottlenecks, and optimize cycle times</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-good">87%</div><div class="metric-label">Process Efficiency</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value" style="color:#1e3a5f;">4.2h</div><div class="metric-label">Avg Cycle Time</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-fair">3</div><div class="metric-label">Active Bottlenecks</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-excellent">94%</div><div class="metric-label">First Pass Yield</div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Process Flow & Cycle Times</h5></div>
+                <div class="card-body"><canvas id="flowChart" height="280"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">Efficiency Trend</h5></div>
+                <div class="card-body"><canvas id="trendChart" height="220"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Bottlenecks</h5></div>
+                <div class="card-body" id="bottlenecks"></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Process Distribution</h5></div>
+                <div class="card-body"><canvas id="distChart" height="220"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-lightbulb me-2" style="color:var(--accent-color);"></i>Optimization Opportunities</h5></div>
+                <div class="card-body" id="optimizations"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const PROCESSES = ['Order Intake','Validation','Processing','Quality Check','Packaging','Shipping'];
+const CYCLE_TIMES = [0.5, 0.8, 2.1, 0.9, 0.6, 0.3];
+const TARGETS = [0.5, 0.5, 1.5, 0.8, 0.5, 0.3];
+
+new Chart(document.getElementById('flowChart'), {
+    type: 'bar',
+    data: {
+        labels: PROCESSES,
+        datasets: [
+            {label:'Actual (hours)',data:CYCLE_TIMES,backgroundColor:'#1e3a5f'},
+            {label:'Target (hours)',data:TARGETS,backgroundColor:'#00a86b80'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{beginAtZero:true,title:{display:true,text:'Hours'}}}, plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'Efficiency %',data:[82,83,84,85,85,86,86,87],borderColor:'#00a86b',backgroundColor:'rgba(0,168,107,0.1)',fill:true,tension:0.3},
+            {label:'First Pass Yield %',data:[90,91,91,92,92,93,93,94],borderColor:'#1e3a5f',tension:0.3,fill:false}
+        ]
+    },
+    options: {responsive:true, scales:{y:{beginAtZero:false}}, plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(document.getElementById('distChart'), {
+    type: 'doughnut',
+    data: {labels:['Value-Added','Non-Value Added','Wait Time','Rework'],datasets:[{data:[62,15,18,5],backgroundColor:['#00a86b','#ff9800','#1e3a5f','#f44336']}]},
+    options: {responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+
+const BOTTLENECKS = [
+    {process:'Processing',impact:'High',delay:'+0.6h',cause:'Manual data entry steps causing delays',suggestion:'Automate data entry with OCR/RPA'},
+    {process:'Quality Check',impact:'Medium',delay:'+0.1h',cause:'Single inspector creates queue during peak',suggestion:'Add second QC station or implement automated pre-check'},
+    {process:'Validation',impact:'Medium',delay:'+0.3h',cause:'Missing information requires customer callbacks',suggestion:'Implement front-end validation forms'}
+];
+
+document.getElementById('bottlenecks').innerHTML = BOTTLENECKS.map(b => {
+    const color = b.impact==='High'?'#f44336':'#ff9800';
+    return `<div class="p-3 rounded mb-3" style="background:#f8f9fa;border-left:4px solid ${color};">
+        <div class="d-flex justify-content-between"><strong>${b.process}</strong><span class="badge" style="background:${color};color:white;">${b.impact} (${b.delay})</span></div>
+        <small class="text-muted">${b.cause}</small><br>
+        <small style="color:var(--accent-color);"><i class="bi bi-arrow-right me-1"></i>${b.suggestion}</small>
+    </div>`;
+}).join('');
+
+const OPTS = [
+    {title:'Automate Processing Step',savings:'$45K/yr',time:'-35% cycle time',effort:'Medium'},
+    {title:'Implement Predictive QC',savings:'$28K/yr',time:'-20% rework',effort:'High'},
+    {title:'Digital Order Intake Forms',savings:'$15K/yr',time:'-40% validation time',effort:'Low'},
+    {title:'Parallel Processing Pipeline',savings:'$32K/yr',time:'-25% throughput time',effort:'Medium'}
+];
+
+document.getElementById('optimizations').innerHTML = OPTS.map(o => `
+    <div class="d-flex align-items-start mb-3 p-2 rounded" style="background:#e8f5e9;">
+        <div class="flex-fill"><strong style="color:#1e3a5f;">${o.title}</strong><br><small class="text-muted">${o.savings} savings &middot; ${o.time}</small></div>
+        <span class="badge bg-${o.effort==='Low'?'success':o.effort==='Medium'?'warning':'danger'}">${o.effort}</span>
+    </div>
+`).join('');
+</script>
+{% endblock %}

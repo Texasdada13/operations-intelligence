@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Risk Assessment - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 style="color:#1e3a5f;"><i class="bi bi-shield-check me-2" style="color:var(--accent-color);"></i>Operational Risk Assessment</h2>
+            <p class="text-muted">Identify and manage risks across efficiency, quality, capacity, and reliability</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-fair">Medium</div><div class="metric-label">Overall Risk Level</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-poor">3</div><div class="metric-label">High Risks</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value" style="color:#1e3a5f;">12</div><div class="metric-label">Total Risks Tracked</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-good">5</div><div class="metric-label">Mitigated This Quarter</div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Risk by Category</h5></div>
+                <div class="card-body"><canvas id="categoryChart" height="280"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Risk Heat Map</h5></div>
+                <div class="card-body"><canvas id="riskChart" height="280"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">Risk Register</h5></div>
+                <div class="card-body" id="riskRegister"></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Risk Trend</h5></div>
+                <div class="card-body"><canvas id="trendChart" height="200"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-shield-check me-2" style="color:var(--accent-color);"></i>Mitigation Actions</h5></div>
+                <div class="card-body" id="mitigations"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('categoryChart'), {
+    type: 'radar',
+    data: {
+        labels: ['Efficiency','Quality','Capacity','Reliability','Supply Chain','Safety'],
+        datasets: [
+            {label:'Risk Score',data:[65,45,78,55,70,30],backgroundColor:'rgba(244,67,54,0.2)',borderColor:'#f44336',pointBackgroundColor:'#f44336'},
+            {label:'Tolerance',data:[60,50,60,50,60,40],backgroundColor:'rgba(0,168,107,0.1)',borderColor:'#00a86b',borderDash:[5,5],pointBackgroundColor:'#00a86b'}
+        ]
+    },
+    options: {responsive:true, scales:{r:{beginAtZero:true,max:100}}, plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(document.getElementById('riskChart'), {
+    type: 'bubble',
+    data: {
+        datasets: [
+            {label:'Efficiency',data:[{x:4,y:3,r:15}],backgroundColor:'rgba(30,58,95,0.6)'},
+            {label:'Quality',data:[{x:2,y:2,r:10}],backgroundColor:'rgba(0,168,107,0.6)'},
+            {label:'Capacity',data:[{x:4,y:4,r:20}],backgroundColor:'rgba(244,67,54,0.6)'},
+            {label:'Reliability',data:[{x:3,y:3,r:12}],backgroundColor:'rgba(255,152,0,0.6)'},
+            {label:'Supply Chain',data:[{x:3,y:4,r:18}],backgroundColor:'rgba(156,39,176,0.6)'},
+            {label:'Safety',data:[{x:1,y:2,r:8}],backgroundColor:'rgba(76,175,80,0.6)'}
+        ]
+    },
+    options: {responsive:true, scales:{x:{title:{display:true,text:'Likelihood (1-5)'},min:0,max:5},y:{title:{display:true,text:'Impact (1-5)'},min:0,max:5}}, plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'Risk Score',data:[72,70,68,66,64,62,60,58],borderColor:'#00a86b',backgroundColor:'rgba(0,168,107,0.1)',fill:true,tension:0.3},
+            {label:'Incidents',data:[4,3,5,2,3,2,1,2],borderColor:'#f44336',tension:0.3,fill:false}
+        ]
+    },
+    options: {responsive:true, scales:{y:{beginAtZero:false}}, plugins:{legend:{position:'bottom'}}}
+});
+
+const RISKS = [
+    {id:'R-001',title:'Single supplier for critical components',category:'Supply Chain',likelihood:4,impact:4,score:'High',status:'Active',owner:'Procurement'},
+    {id:'R-002',title:'Assembly line near max capacity',category:'Capacity',likelihood:4,impact:3,score:'High',status:'Monitoring',owner:'Operations'},
+    {id:'R-003',title:'Equipment aging (CNC machines >8yr)',category:'Reliability',likelihood:3,impact:4,score:'High',status:'Active',owner:'Maintenance'},
+    {id:'R-004',title:'Manual data entry error rate',category:'Efficiency',likelihood:4,impact:2,score:'Medium',status:'Mitigating',owner:'IT'},
+    {id:'R-005',title:'Quality variation in night shift',category:'Quality',likelihood:3,impact:2,score:'Medium',status:'Monitoring',owner:'Quality'},
+    {id:'R-006',title:'Seasonal demand spikes Q3',category:'Capacity',likelihood:5,impact:3,score:'High',status:'Planning',owner:'Planning'}
+];
+
+document.getElementById('riskRegister').innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>ID</th><th>Risk</th><th>Category</th><th>L x I</th><th>Level</th><th>Status</th><th>Owner</th></tr></thead><tbody>${RISKS.map(r => {
+    const color = r.score==='High'?'danger':r.score==='Medium'?'warning':'success';
+    return `<tr><td><small class="fw-bold">${r.id}</small></td><td>${r.title}</td><td><small class="text-muted">${r.category}</small></td><td>${r.likelihood}x${r.impact}</td><td><span class="badge bg-${color}">${r.score}</span></td><td>${r.status}</td><td><small>${r.owner}</small></td></tr>`;
+}).join('')}</tbody></table></div>`;
+
+const MITIGATIONS = [
+    {action:'Qualify secondary supplier for critical components',risk:'R-001',due:'Mar 2025',status:'In Progress'},
+    {action:'Approve budget for new CNC machine',risk:'R-003',due:'Apr 2025',status:'Pending'},
+    {action:'Implement RPA for data entry automation',risk:'R-004',due:'Mar 2025',status:'In Progress'},
+    {action:'Create overtime and outsource plan for Q3',risk:'R-006',due:'May 2025',status:'Not Started'},
+    {action:'Add night shift quality spot-checks',risk:'R-005',due:'Immediate',status:'Completed'}
+];
+
+document.getElementById('mitigations').innerHTML = MITIGATIONS.map(m => {
+    const statusColor = m.status==='Completed'?'success':m.status==='In Progress'?'primary':m.status==='Pending'?'warning':'secondary';
+    return `<div class="d-flex align-items-start mb-3"><div class="flex-fill"><strong style="color:#1e3a5f;">${m.action}</strong><br><small class="text-muted">${m.risk} &middot; Due: ${m.due}</small></div><span class="badge bg-${statusColor}">${m.status}</span></div>`;
+}).join('');
+</script>
+{% endblock %}

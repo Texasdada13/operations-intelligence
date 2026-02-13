@@ -176,6 +176,36 @@ def capacity_view(org_id):
     )
 
 
+@app.route('/process-analytics')
+def process_analytics():
+    """Process analytics page."""
+    return render_template('process_analytics.html')
+
+
+@app.route('/kpi-benchmarking')
+def kpi_benchmarking():
+    """KPI benchmarking page."""
+    return render_template('kpi_benchmarking.html')
+
+
+@app.route('/capacity-planning')
+def capacity_planning():
+    """Capacity planning page."""
+    return render_template('capacity_planning.html')
+
+
+@app.route('/risk-assessment')
+def risk_assessment():
+    """Operational risk assessment page."""
+    return render_template('ops_risk_assessment.html')
+
+
+@app.route('/oee-tracking')
+def oee_tracking():
+    """OEE tracking page."""
+    return render_template('oee_tracking.html')
+
+
 @app.route('/chat')
 @app.route('/chat/<org_id>')
 def chat_view(org_id=None):

@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}OEE Tracking - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 style="color:#1e3a5f;"><i class="bi bi-speedometer2 me-2" style="color:var(--accent-color);"></i>Overall Equipment Effectiveness</h2>
+            <p class="text-muted">Monitor availability, performance, and quality across production equipment</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-good">78.2%</div><div class="metric-label">Overall OEE</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value" style="color:#1e88e5;">89.5%</div><div class="metric-label">Availability</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value" style="color:#ff9800;">85.1%</div><div class="metric-label">Performance</div></div></div>
+        <div class="col-md-3"><div class="card metric-card"><div class="metric-value score-excellent">96.8%</div><div class="metric-label">Quality</div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">OEE Trend (Last 12 Months)</h5></div>
+                <div class="card-body"><canvas id="oeeTrendChart" height="280"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Equipment Performance</h5></div>
+                <div class="card-body" id="equipmentTable"></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">OEE Breakdown</h5></div>
+                <div class="card-body"><canvas id="oeeBreakdown" height="260"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Loss Categories</h5></div>
+                <div class="card-body"><canvas id="lossChart" height="220"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-tools me-2" style="color:var(--accent-color);"></i>Top Loss Drivers</h5></div>
+                <div class="card-body" id="lossDrivers"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">Downtime Analysis</h5></div>
+                <div class="card-body"><canvas id="downtimeChart" height="260"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">Shift Comparison</h5></div>
+                <div class="card-body"><canvas id="shiftChart" height="260"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// OEE Trend
+new Chart(document.getElementById('oeeTrendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'OEE',data:[72.1,73.5,74.2,75.0,75.8,76.5,76.0,77.2,77.8,78.0,77.5,78.2],borderColor:'#00a86b',backgroundColor:'rgba(0,168,107,0.1)',fill:true,tension:0.3,borderWidth:3},
+            {label:'Availability',data:[85.0,86.2,87.0,87.5,88.0,88.5,88.0,89.0,89.2,89.5,89.0,89.5],borderColor:'#1e88e5',tension:0.3,fill:false,borderDash:[5,5]},
+            {label:'Performance',data:[82.0,82.5,82.8,83.2,83.5,84.0,83.5,84.2,84.8,85.0,84.5,85.1],borderColor:'#ff9800',tension:0.3,fill:false,borderDash:[5,5]},
+            {label:'Quality',data:[95.2,95.5,95.8,96.0,96.2,96.3,96.5,96.5,96.6,96.7,96.8,96.8],borderColor:'#4caf50',tension:0.3,fill:false,borderDash:[5,5]}
+        ]
+    },
+    options: {responsive:true, scales:{y:{min:60,max:100,ticks:{callback:v=>v+'%'}}}, plugins:{legend:{position:'bottom'}}}
+});
+
+// OEE Breakdown (waterfall-style stacked)
+new Chart(document.getElementById('oeeBreakdown'), {
+    type: 'bar',
+    data: {
+        labels: ['Availability\n89.5%','Performance\n85.1%','Quality\n96.8%','OEE\n78.2%'],
+        datasets: [{
+            data: [89.5, 85.1, 96.8, 78.2],
+            backgroundColor: ['#1e88e5','#ff9800','#4caf50','#00a86b'],
+            borderRadius: 6
+        }]
+    },
+    options: {responsive:true, scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}}}, plugins:{legend:{display:false}}}
+});
+
+// Loss Categories
+new Chart(document.getElementById('lossChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Planned Downtime','Unplanned Downtime','Speed Loss','Minor Stops','Defects','Startup Waste'],
+        datasets: [{data:[25,35,18,12,6,4],backgroundColor:['#1e88e5','#f44336','#ff9800','#ffeb3b','#9c27b0','#795548']}]
+    },
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+});
+
+// Equipment Data
+const EQUIPMENT = [
+    {name:'CNC Machine A1',type:'CNC Milling',oee:82.5,avail:92.0,perf:88.5,qual:97.2,status:'Running',trend:'up'},
+    {name:'CNC Machine A2',type:'CNC Milling',oee:79.1,avail:90.0,perf:86.0,qual:96.8,status:'Running',trend:'stable'},
+    {name:'Injection Mold B1',type:'Injection Molding',oee:85.3,avail:93.5,perf:89.5,qual:97.8,status:'Running',trend:'up'},
+    {name:'Injection Mold B2',type:'Injection Molding',oee:68.4,avail:82.0,perf:82.0,qual:95.5,status:'Maintenance',trend:'down'},
+    {name:'Assembly Line C1',type:'Assembly',oee:76.2,avail:88.0,perf:85.0,qual:96.0,status:'Running',trend:'up'},
+    {name:'Assembly Line C2',type:'Assembly',oee:74.8,avail:87.5,perf:84.0,qual:95.5,status:'Running',trend:'stable'},
+    {name:'Press D1',type:'Stamping Press',oee:81.0,avail:91.0,perf:87.5,qual:97.0,status:'Running',trend:'up'},
+    {name:'Packaging E1',type:'Packaging',oee:88.2,avail:95.0,perf:91.0,qual:98.2,status:'Running',trend:'up'}
+];
+
+document.getElementById('equipmentTable').innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Equipment</th><th>Type</th><th>OEE</th><th>Avail</th><th>Perf</th><th>Quality</th><th>Status</th><th>Trend</th></tr></thead><tbody>${EQUIPMENT.map(e => {
+    const oeeColor = e.oee>=80?'success':e.oee>=70?'warning':'danger';
+    const statusColor = e.status==='Running'?'success':e.status==='Maintenance'?'warning':'danger';
+    const trendIcon = e.trend==='up'?'<i class="bi bi-arrow-up-short text-success"></i>':e.trend==='down'?'<i class="bi bi-arrow-down-short text-danger"></i>':'<i class="bi bi-dash text-muted"></i>';
+    return `<tr><td><strong>${e.name}</strong></td><td><small class="text-muted">${e.type}</small></td><td><span class="badge bg-${oeeColor}">${e.oee}%</span></td><td>${e.avail}%</td><td>${e.perf}%</td><td>${e.qual}%</td><td><span class="badge bg-${statusColor}">${e.status}</span></td><td>${trendIcon}</td></tr>`;
+}).join('')}</tbody></table></div>`;
+
+// Top Loss Drivers
+const LOSSES = [
+    {driver:'Unplanned breakdowns (CNC A2, Mold B2)',hours:42,pct:28,color:'#f44336'},
+    {driver:'Changeover/Setup time',hours:35,pct:23,color:'#ff9800'},
+    {driver:'Planned maintenance windows',hours:25,pct:17,color:'#1e88e5'},
+    {driver:'Material feed jams (Assembly C1/C2)',hours:18,pct:12,color:'#ffeb3b'},
+    {driver:'Speed reduction for quality (Press D1)',hours:15,pct:10,color:'#9c27b0'},
+    {driver:'Startup scrap and warm-up',hours:10,pct:7,color:'#795548'}
+];
+
+document.getElementById('lossDrivers').innerHTML = LOSSES.map(l =>
+    `<div class="mb-3"><div class="d-flex justify-content-between mb-1"><small style="color:#1e3a5f;"><strong>${l.driver}</strong></small><small class="text-muted">${l.hours}h (${l.pct}%)</small></div><div class="progress"><div class="progress-bar" style="width:${l.pct*100/28}%;background:${l.color};"></div></div></div>`
+).join('');
+
+// Downtime Analysis
+new Chart(document.getElementById('downtimeChart'), {
+    type: 'bar',
+    data: {
+        labels: ['CNC A1','CNC A2','Mold B1','Mold B2','Assy C1','Assy C2','Press D1','Pkg E1'],
+        datasets: [
+            {label:'Planned',data:[4,5,3,8,6,5,4,2],backgroundColor:'#1e88e5'},
+            {label:'Unplanned',data:[2,12,1,18,5,6,3,1],backgroundColor:'#f44336'},
+            {label:'Changeover',data:[6,6,4,4,8,8,5,3],backgroundColor:'#ff9800'}
+        ]
+    },
+    options: {responsive:true, scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'Hours'}}}, plugins:{legend:{position:'bottom'}}}
+});
+
+// Shift Comparison
+new Chart(document.getElementById('shiftChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Day Shift (6a-2p)','Swing Shift (2p-10p)','Night Shift (10p-6a)'],
+        datasets: [
+            {label:'Availability',data:[91.5,89.0,86.2],backgroundColor:'#1e88e5'},
+            {label:'Performance',data:[87.0,85.5,81.8],backgroundColor:'#ff9800'},
+            {label:'Quality',data:[97.5,96.8,95.2],backgroundColor:'#4caf50'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{min:70,max:100,ticks:{callback:v=>v+'%'}}}, plugins:{legend:{position:'bottom'}}}
+});
+</script>
+{% endblock %}

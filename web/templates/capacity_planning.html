@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Capacity Planning - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 style="color:#1e3a5f;"><i class="bi bi-calendar-check me-2" style="color:var(--accent-color);"></i>Capacity Planning</h2>
+            <p class="text-muted">Forecast demand, allocate resources, and plan capacity</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2"><div class="card metric-card"><div class="metric-value" style="color:#1e3a5f;">78%</div><div class="metric-label">Utilization</div></div></div>
+        <div class="col-md-2"><div class="card metric-card"><div class="metric-value score-good">142</div><div class="metric-label">Daily Output</div></div></div>
+        <div class="col-md-2"><div class="card metric-card"><div class="metric-value" style="color:#1e3a5f;">185</div><div class="metric-label">Max Capacity</div></div></div>
+        <div class="col-md-2"><div class="card metric-card"><div class="metric-value score-fair">43</div><div class="metric-label">Spare Units</div></div></div>
+        <div class="col-md-2"><div class="card metric-card"><div class="metric-value score-good">3</div><div class="metric-label">Shifts Active</div></div></div>
+        <div class="col-md-2"><div class="card metric-card"><div class="metric-value" style="color:#1e3a5f;">92%</div><div class="metric-label">Availability</div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Demand vs Capacity Forecast</h5></div>
+                <div class="card-body"><canvas id="forecastChart" height="280"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">Resource Allocation by Department</h5></div>
+                <div class="card-body"><canvas id="resourceChart" height="250"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Department Utilization</h5></div>
+                <div class="card-body" id="deptUtil"></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Capacity Risks</h5></div>
+                <div class="card-body" id="capacityRisks"></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-lightbulb me-2" style="color:var(--accent-color);"></i>Recommendations</h5></div>
+                <div class="card-body" id="recommendations"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const months = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+new Chart(document.getElementById('forecastChart'), {
+    type: 'line',
+    data: {
+        labels: months,
+        datasets: [
+            {label:'Forecasted Demand',data:[150,158,165,172,168,175,180,185,178,170],borderColor:'#f44336',backgroundColor:'rgba(244,67,54,0.1)',fill:true,tension:0.3},
+            {label:'Current Capacity',data:months.map(()=>185),borderColor:'#1e3a5f',borderDash:[5,5],fill:false,pointRadius:0},
+            {label:'Planned Capacity',data:[185,185,185,185,200,200,200,200,200,200],borderColor:'#00a86b',borderDash:[3,3],fill:false,pointRadius:0},
+            {label:'Actual Output',data:[142,148,null,null,null,null,null,null,null,null],borderColor:'#1e3a5f',fill:false,tension:0.3,spanGaps:false}
+        ]
+    },
+    options: {responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+
+const DEPTS = [{name:'Assembly',util:92,capacity:60,demand:55},{name:'Machining',util:85,capacity:45,demand:38},{name:'Packaging',util:68,capacity:40,demand:27},{name:'Quality',util:78,capacity:20,demand:16},{name:'Logistics',util:72,capacity:25,demand:18}];
+
+new Chart(document.getElementById('resourceChart'), {
+    type: 'bar',
+    data: {
+        labels: DEPTS.map(d=>d.name),
+        datasets: [
+            {label:'Demand (units)',data:DEPTS.map(d=>d.demand),backgroundColor:'#1e3a5f'},
+            {label:'Capacity (units)',data:DEPTS.map(d=>d.capacity),backgroundColor:'#00a86b80'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{beginAtZero:true}}, plugins:{legend:{position:'bottom'}}}
+});
+
+document.getElementById('deptUtil').innerHTML = DEPTS.map(d => {
+    const color = d.util>=90?'danger':d.util>=75?'primary':d.util>=60?'warning':'success';
+    return `<div class="mb-3"><div class="d-flex justify-content-between mb-1"><strong>${d.name}</strong><span>${d.util}%</span></div><div class="progress"><div class="progress-bar bg-${color}" style="width:${d.util}%"></div></div></div>`;
+}).join('');
+
+const RISKS = [
+    {risk:'Assembly at 92% utilization',severity:'High',desc:'Approaching max capacity - any demand spike will cause delays'},
+    {risk:'Q3 demand exceeds current capacity',severity:'High',desc:'Forecast shows 180+ units needed, current cap is 185'},
+    {risk:'Single point of failure in Machining',severity:'Medium',desc:'Only 2 CNC machines, failure of either drops capacity 50%'},
+    {risk:'Seasonal peak in August',severity:'Medium',desc:'Historical data shows 15% demand increase'}
+];
+
+document.getElementById('capacityRisks').innerHTML = RISKS.map(r => `
+    <div class="p-2 rounded mb-2" style="background:${r.severity==='High'?'#ffebee':'#fff3e0'};border-left:3px solid ${r.severity==='High'?'#f44336':'#ff9800'};">
+        <strong style="color:#1e3a5f;">${r.risk}</strong><br><small class="text-muted">${r.desc}</small>
+    </div>`).join('');
+
+const RECS = [
+    {rec:'Add 3rd CNC machine to Machining',impact:'High',timeline:'Q2 2025'},
+    {rec:'Cross-train Assembly staff for Packaging',impact:'Medium',timeline:'Immediate'},
+    {rec:'Implement overtime scheduling for peak months',impact:'Medium',timeline:'Q3 2025'},
+    {rec:'Negotiate outsourcing contract for overflow',impact:'High',timeline:'30 days'}
+];
+
+document.getElementById('recommendations').innerHTML = RECS.map(r => `
+    <div class="d-flex align-items-start mb-3"><div class="flex-fill"><strong style="color:#1e3a5f;">${r.rec}</strong><br><small class="text-muted">Impact: ${r.impact} &middot; ${r.timeline}</small></div></div>
+`).join('');
+</script>
+{% endblock %}
