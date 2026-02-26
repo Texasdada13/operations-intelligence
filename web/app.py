@@ -67,10 +67,34 @@ from src.patterns.weighted_scoring import (
 from src.integrations import OperationsIntegrationManager, IntegrationType
 integration_manager = OperationsIntegrationManager()
 
+from patriot_ui import init_ui
+from patriot_ui.config import NavItem, NavSection
+
 # App metadata
 APP_NAME = "Operations Intelligence"
 APP_VERSION = "1.0.0"
 
+init_ui(app,
+    product_name="Operations Intelligence",
+    product_icon="bi-gear",
+    show_org_selector=True,
+    nav_sections=[
+        NavSection("Overview", [
+            NavItem("Dashboard", "bi-speedometer2", "/dashboard"),
+            NavItem("AI Consultant", "bi-chat-dots", "/chat"),
+        ]),
+        NavSection("Tools", [
+            NavItem("Process Analytics", "bi-activity", "/process-analytics"),
+            NavItem("KPI Benchmarking", "bi-bar-chart-line", "/kpi-benchmarking"),
+            NavItem("Capacity Planning", "bi-layers", "/capacity-planning"),
+            NavItem("Risk Assessment", "bi-shield-exclamation", "/risk-assessment"),
+            NavItem("OEE Tracking", "bi-speedometer", "/oee-tracking"),
+        ]),
+        NavSection("Connect", [
+            NavItem("Integrations", "bi-plug", "/integrations"),
+        ]),
+    ]
+)
 
 @app.context_processor
 def inject_globals():

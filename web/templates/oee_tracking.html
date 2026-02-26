@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}OEE Tracking - {{ app_name }}{% endblock %}
+{% block page_title %}OEE Tracking{% endblock %}
 {% block content %}
-<div class="container py-4">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <h2 style="color:#1e3a5f;"><i class="bi bi-speedometer2 me-2" style="color:var(--accent-color);"></i>Overall Equipment Effectiveness</h2>
+            <h2 style="color:#1e3a5f;"><i class="bi bi-speedometer2 me-2" style="color:var(--pt-interactive-accent);"></i>Overall Equipment Effectiveness</h2>
             <p class="text-muted">Monitor availability, performance, and quality across production equipment</p>
         </div>
     </div>
@@ -37,7 +37,7 @@
                 <div class="card-body"><canvas id="lossChart" height="220"></canvas></div>
             </div>
             <div class="card">
-                <div class="card-header"><h5 class="mb-0"><i class="bi bi-tools me-2" style="color:var(--accent-color);"></i>Top Loss Drivers</h5></div>
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-tools me-2" style="color:var(--pt-interactive-accent);"></i>Top Loss Drivers</h5></div>
                 <div class="card-body" id="lossDrivers"></div>
             </div>
         </div>

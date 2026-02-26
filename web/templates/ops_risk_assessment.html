@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Risk Assessment - {{ app_name }}{% endblock %}
+{% block page_title %}Risk Assessment{% endblock %}
 {% block content %}
-<div class="container py-4">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <h2 style="color:#1e3a5f;"><i class="bi bi-shield-check me-2" style="color:var(--accent-color);"></i>Operational Risk Assessment</h2>
+            <h2 style="color:#1e3a5f;"><i class="bi bi-shield-check me-2" style="color:var(--pt-interactive-accent);"></i>Operational Risk Assessment</h2>
             <p class="text-muted">Identify and manage risks across efficiency, quality, capacity, and reliability</p>
         </div>
     </div>
@@ -44,7 +44,7 @@
                 <div class="card-body"><canvas id="trendChart" height="200"></canvas></div>
             </div>
             <div class="card">
-                <div class="card-header"><h5 class="mb-0"><i class="bi bi-shield-check me-2" style="color:var(--accent-color);"></i>Mitigation Actions</h5></div>
+                <div class="card-header"><h5 class="mb-0"><i class="bi bi-shield-check me-2" style="color:var(--pt-interactive-accent);"></i>Mitigation Actions</h5></div>
                 <div class="card-body" id="mitigations"></div>
             </div>
         </div>

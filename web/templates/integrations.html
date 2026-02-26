@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}DevOps Integrations - {{ app_name }}{% endblock %}
+{% block page_title %}DevOps Integrations{% endblock %}
 
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,7 +18,7 @@
         box-shadow: 0 4px 15px rgba(30, 58, 95, 0.15);
     }
     .integration-card.connected {
-        border-color: var(--accent-color);
+        border-color: var(--pt-interactive-accent);
         background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
     }
     .integration-card.demo {
@@ -36,7 +37,7 @@
     }
     .jira-icon { background: linear-gradient(135deg, #0052cc 0%, #0747a6 100%); color: white; }
     .azure-icon { background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%); color: white; }
-    .demo-icon { background: var(--primary-gradient); color: white; }
+    .demo-icon { background: var(--pt-gradient-primary); color: white; }
     .status-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
@@ -72,7 +73,7 @@
     }
     .workload-fill {
         height: 8px;
-        background: var(--primary-gradient);
+        background: var(--pt-gradient-primary);
         transition: width 0.5s ease;
     }
     .alert-item {
@@ -88,7 +89,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1"><i class="bi bi-plug text-primary me-2"></i>DevOps Integrations</h2>
